@@ -37,26 +37,33 @@ public class ReservaService
     }
 
     public async Task<(bool success, string error, ReservaDto? dto)> Crear(CrearReservaDto dto)
+{
+    if (dto.FechaSalida <= dto.FechaEntrada)
+        return (false, "La fecha de salida debe ser mayor a la de entrada", null);
+
+    if (dto.FechaEntrada < DateTime.UtcNow)
+        return (false, "No puedes reservar en el pasado", null);
+
+    // 👇 Validación de disponibilidad
+    var reservaExistente = await _repo.FindAsync(r =>
+        r.HabitacionId == dto.HabitacionId &&
+        r.FechaEntrada < dto.FechaSalida &&
+        r.FechaSalida > dto.FechaEntrada);
+
+    if (reservaExistente is not null)
+        return (false, "La habitación ya está reservada en esas fechas", null);
+
+    var reserva = new Reserva
     {
-        // 🔥 Validaciones básicas
-        if (dto.FechaSalida <= dto.FechaEntrada)
-            return (false, "La fecha de salida debe ser mayor a la de entrada", null);
+        HabitacionId = dto.HabitacionId,
+        HuespedId = dto.HuespedId,
+        FechaEntrada = dto.FechaEntrada,
+        FechaSalida = dto.FechaSalida
+    };
 
-        if (dto.FechaEntrada < DateTime.UtcNow)
-            return (false, "No puedes reservar en el pasado", null);
-
-        // 🧱 Crear entidad correctamente
-        var reserva = new Reserva
-        {
-            HabitacionId = dto.HabitacionId,
-            HuespedId = dto.HuespedId,
-            FechaEntrada = dto.FechaEntrada,
-            FechaSalida = dto.FechaSalida
-        };
-
-        await _repo.Add(reserva);
-        return (true, string.Empty, ToDto(reserva));
-    }
+    await _repo.Add(reserva);
+    return (true, string.Empty, ToDto(reserva));
+}
 
     public async Task<bool> Eliminar(int id)
     {

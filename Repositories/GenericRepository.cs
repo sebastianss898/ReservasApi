@@ -44,5 +44,9 @@ public class Repository<T> where T : class
         .ToListAsync();
     }
 
+    public async Task<T?> FindAsync(Expression<Func<T, bool>> predicate) =>
+    await _db.Set<T>().FirstOrDefaultAsync(predicate);
+
 
 }
+

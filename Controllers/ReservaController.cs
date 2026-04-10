@@ -10,7 +10,7 @@ using ReservasHotelApi.DTOs;
 
 public class ReservaController : ControllerBase
 {
-    public readonly ReservaService _service;
+    private readonly ReservaService _service;
 
     public ReservaController(ReservaService service)
     {
